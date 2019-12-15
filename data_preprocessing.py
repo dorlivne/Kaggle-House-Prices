@@ -333,41 +333,50 @@ def prune_features(X_train, Y_train , verbose=cfg.verbose):
 
 
 def preprocessing():
+    print("------------------ Extracting data from CSV files ------------------")
     df_train = extract_data(path=cfg.train_csv_path)
+    # extracting test data frame from csv file
+    df_test = extract_data(path=cfg.test_csv_path)
     # remove outliers from train
+    print("------------------ Removing outliers from train ------------------")
     df_train = clear_outliers_manually(df_train)
     df_train = clear_outliers(df=df_train)
     # rearrange index because we deleted samples
     df_train.reset_index(inplace=True)
     df_train.drop(['Id'], axis=1, inplace=True)
-    # extracting test data frame from csv file
-    df_test = extract_data(path=cfg.test_csv_path)
+    print("------------------ Concatenating train and test to one Data Frame ------------------")
     # adding the SalePrice dependent variable so we can concatenate test and train for preprocessing purposes
     df_test.insert(df_test.shape[1] - 1, 'SalePrice', np.nan)  # need to be predicted
     df_train['DataType'], df_test['DataType'] = 'train', 'test'  # to divide them later on
     # treat all the data as one, so we would preform the same changes on test and on train
     df_total = pd.concat([df_train, df_test], ignore_index=True, axis=0, sort=False)
+    print("------------------ Scaling the dependent variable with log1p transform ------------------")
     df_total['SalePrice'] = np.log1p(df_total['SalePrice'])  # natural logarithm to fix the scale of SalePrices
+    print("------------------ Throwing out constant features ------------------")
     df_total = throw_constant_features(df_total)
+    print("------------------ Filling missing data ------------------")
     df_total = fill_missing_data(df_total)
+    print("------------------ Fixing skewness in data ------------------")
     df_total = fixing_skewness(df_total)
+    print("------------------ Feature extraction ------------------")
     df_total = feature_extraction(df_total)
+    print("------------------  Transforming categorical values to indicator features ------------------")
     # transforming categorical values to indicator features
     df_total = pd.get_dummies(df_total, columns=None, drop_first=True)
+    print("------------------  Seperating back to test and train data frames ------------------")
     df_test = df_total[df_total['DataType_train'] == 0]
     df_train = df_total[df_total['DataType_train'] == 1]
     # organizing the data frames
     df_test = df_test.drop(['DataType_train', 'SalePrice'], axis='columns')
     df_train = df_train.drop('DataType_train', axis='columns')
-    # # transforming categorical values to indicator features
-    # df_test = pd.get_dummies(df_test, columns=None, drop_first=True)
-    # df_train = pd.get_dummies(df_train, columns=None, drop_first=True)
-    # splitting train set to dependent and independent variables
+    print("------------------  Dividing train to independent & dependent variables ------------------")
     X_train = df_train.drop(['SalePrice'], axis='columns')
     Y_train = df_train['SalePrice']
+    print("------------------  Pruning features with Lasso Regression ------------------")
     usefull_features, _ = prune_features(X_train, Y_train)
     X_train = X_train[usefull_features]
     df_test = df_test[usefull_features]
+    print("------------------  Saving Train and Test data frames ------------------")
     pd.to_pickle(X_train, cfg.X_train_path)
     pd.to_pickle(Y_train, cfg.Y_train_path)
     pd.to_pickle(df_test, cfg.X_test_path)

@@ -1,7 +1,7 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg
+from model import Benchmark_lg, LinearModel
 from sklearn.preprocessing import StandardScaler
 
 
@@ -15,8 +15,23 @@ def split_data(X, Y, train_portion=0.5):
 
 
 def monte_carlo_experiements(title, model_name, preprocessing, data,
-                             results_df:pd.DataFrame, model: Benchmark_lg,
+                             results_df:pd.DataFrame, model: LinearModel,
                              num_of_experiements=cfg.MC_episodes, verbose=cfg.verbose):
+    """
+    Cross-validation, split train data frame to equally sized val and train data sets and evaluate R2 adjusted and RMSE
+    :param title: name of experiment to be saved in results data frame
+    :param model_name: name of linear model used in experiment
+    :param preprocessing: type of postprocessing, if a massive change is preformed please write down in short
+                          what the postprocessing includes(like normal)
+    :param data: train data frame with SalePrice given
+    :param results_df: where to put the result of the experiment
+    :param model: model that implements the LinearModel interface
+    :param num_of_experiements: to reduce variance we preform multiple seperations to val and train and take the
+                                mean over the results ( Note: this might be wrong, we could just use cross-validation)
+    :param verbose: to print the results on console
+    :return:
+    """
+    print("------------------  Training on train and evaluating on Val ------------------")
     X, Y = data
     mean_rmse, mean_R2_adjusted, test_mean_rmse, test_mean_R2_adjusted = 0, 0, 0, 0
     for _ in range(num_of_experiements):
@@ -81,6 +96,7 @@ if __name__ == '__main__':
         results_df.to_pickle(path=cfg.results_df)
     else:
         results_df = pd.read_pickle(path=cfg.results_df)
+    print("------------------  Reading Train from path ------------------")
     X = pd.read_pickle(path=cfg.X_train_path)
     Y = pd.read_pickle(path=cfg.Y_train_path)
     benchmark_linear_regression = Benchmark_lg(log=True)
