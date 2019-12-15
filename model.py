@@ -17,16 +17,23 @@ import abc
 #        Lasso can fix the slope to zero while Ridge can do so asymptotically
 #        thus Lasso is a good method to finding useless parameters by observing their linear regression slope
 
+
 class LinearModel(abc.ABC):
 
     @abc.abstractmethod
-    def model_fit(self, X, Y, verbose):
+    def model_fit(self, X, Y, verbose=cfg.verbose):
         pass
 
-    def model_eval(self, X, Y, verbose):
+    @abc.abstractmethod
+    def model_eval(self, X, Y, verbose=cfg.verbose):
         pass
 
+    @abc.abstractmethod
     def predict(self, X):
+        pass
+
+    @abc.abstractmethod
+    def get_model(self, X):
         pass
 
 
@@ -42,9 +49,6 @@ class Benchmark_lg(LinearModel):
 
     def model_fit(self, X, Y, verbose=cfg.verbose):
         self.model.fit(X, Y)
-        # if verbose:
-        #     print("Linear Regression coefficients shape : \n {}".format(self.model.coef_.shape))
-        #     print("Linear Regression coefficients : \n {}".format(self.model.coef_))
         return self
 
     def model_eval(self, X, Y, verbose=cfg.verbose):
@@ -59,5 +63,8 @@ class Benchmark_lg(LinearModel):
 
     def predict(self, X):
         return self.model.predict(X)
+
+    def get_model(self, X):
+        return self.model
 
 
