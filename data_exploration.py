@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from config import IowaHousePricingConfig as cfg
+from utils import extract_data
 
 
 def draw_boxplot(categorical_x: str, numerical_y: str, filename: str, data: pd.DataFrame):
@@ -104,16 +105,6 @@ def main():
     # visualizations(data_frame=data_frame_train)
 
 
-def extract_data(path=r"data/train.csv"):
-    data_frame_train = pd.read_csv(path)
-    #  MSSubclass is assigned integers and is regarded as a numerical variable, but MSSubclass is a categorical variable
-    # with no importance to order ( not ordinal like overall quality for example)
-    # that means that treating mssubclass as a numerical variable is not logical because the numbers doesn't mean anything
-    #  convert 'MSSubclass' column to type(str) , to be object type variable
-    data_frame_train['MSSubClass'] = data_frame_train['MSSubClass'].astype(str)
-    # set id to be the index of an observation and not part of the feature space
-    data_frame_train.set_index('Id', inplace=True)
-    return data_frame_train
 
 
 def visualizations(data_frame):

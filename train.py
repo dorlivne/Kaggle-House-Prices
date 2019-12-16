@@ -1,9 +1,10 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg, LinearModel
+from model import Benchmark_lg, LinearModel, Ridge_Regression
 from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import cross_val_score
+
 
 def split_data(X, Y, train_portion=0.75):
     msk = np.random.rand(len(X)) < train_portion
@@ -13,59 +14,6 @@ def split_data(X, Y, train_portion=0.75):
     Y_val = Y[~msk]
     return X_train, X_val, Y_train, Y_val
 
-
-# def monte_carlo_experiements(title, model_name, preprocessing, data,
-#                              results_df:pd.DataFrame, model: LinearModel,
-#                              num_of_experiements=cfg.MC_episodes, verbose=cfg.verbose):
-#     """
-#     Cross-validation, split train data frame to equally sized val and train data sets and evaluate R2 adjusted and RMSE
-#     :param title: name of experiment to be saved in results data frame
-#     :param model_name: name of linear model used in experiment
-#     :param preprocessing: type of postprocessing, if a massive change is preformed please write down in short
-#                           what the postprocessing includes(like normal)
-#     :param data: train data frame with SalePrice given
-#     :param results_df: where to put the result of the experiment
-#     :param model: model that implements the LinearModel interface
-#     :param num_of_experiements: to reduce variance we preform multiple seperations to val and train and take the
-#                                 mean over the results ( Note: this might be wrong, we could just use cross-validation)
-#     :param verbose: to print the results on console
-#     :return:
-#     """
-#     print("------------------  Training on train and evaluating on Val ------------------")
-#     X, Y = data
-#     mean_rmse, mean_R2_adjusted, test_mean_rmse, test_mean_R2_adjusted = 0, 0, 0, 0
-#     for _ in range(num_of_experiements):
-#         X_train, X_val, Y_train, Y_val = split_data(X, Y)  # randomly select validation set
-#         if cfg.scale:
-#             scaler = StandardScaler()
-#             X_train = scaler.fit_transform(X_train)
-#             X_val = scaler.transform(X_val)
-#         model.model_fit(X_train, Y_train)
-#         rmse, R2_adjusted = model.model_eval(X_train, Y_train)
-#         mean_rmse += rmse
-#         mean_R2_adjusted += R2_adjusted
-#         test_rmse, test_R2_adjusted = model.model_eval(X_val, Y_val)
-#         test_mean_rmse += test_rmse
-#         test_mean_R2_adjusted += test_R2_adjusted
-#     mean_rmse /= num_of_experiements
-#     mean_R2_adjusted /= num_of_experiements
-#     test_mean_rmse /= num_of_experiements
-#     test_mean_R2_adjusted /= num_of_experiements
-#     if verbose:
-#         print("train: \n rmse: {}, R2_adj: {}".format(mean_rmse, mean_R2_adjusted))
-#         print("val: \n rmse: {}, R2_adj: {}".format(test_mean_rmse, test_mean_R2_adjusted))
-#     results = [build_result_line(title, 'train', model_name, preprocessing, mean_rmse, mean_R2_adjusted),
-#                build_result_line(title, 'val', model_name, preprocessing, test_mean_rmse, test_mean_R2_adjusted)]
-#     if title in results_df['title'].values:
-#         print("Warning: Overwriting previous experiement due to colliding title")
-#         user_input = over_write_or_exit_from_usr()
-#         if user_input == 'e':
-#             print("not saving results, existing....")
-#             exit()
-#         criteria = results_df['title'].values != title
-#         results_df = results_df[criteria]
-#     results_df = results_df.append(pd.DataFrame(results, columns=['title', 'dataset', 'model_name', 'preprocessing',  'rmse',  'R2_adjusted']))
-#     results_df.to_pickle(path=cfg.results_df)
 
 """
 Note:
@@ -113,8 +61,8 @@ def evaluate_model_on_train(title, model_name, preprocessing, data,
     model.model_fit(X, Y)
     print("------------------  Evaluating on Train ------------------")
     train_rmse, train_R2_adjusted = model.model_eval(X, Y, False)
-    rmse_cv_score = np.sqrt(np.abs(cross_val_score(benchmark_linear_regression.model, X, Y, cv=5, scoring='neg_mean_squared_error')))
-    R2_cv_score = cross_val_score(benchmark_linear_regression.model, X, Y, cv=5, scoring='r2')
+    rmse_cv_score = np.sqrt(np.abs(cross_val_score(model.get_model(), X, Y, cv=5, scoring='neg_mean_squared_error')))
+    R2_cv_score = cross_val_score(model.get_model(), X, Y, cv=5, scoring='r2')
     if verbose:
         print("train: \n rmse: {}, R2_adj: {}".format(train_rmse, train_R2_adjusted))
         print("cross validation rmse score: {} (+/- {}".format(rmse_cv_score.mean(), rmse_cv_score.std() * 2))
@@ -127,10 +75,18 @@ def evaluate_model_on_train(title, model_name, preprocessing, data,
         if user_input == 'e':
             print("not saving results, existing....")
             exit()
+        if user_input == 'd':
+            print("deleting previous results, existing....")
+            criteria = results_df['title'].values != title
+            results_df = results_df[criteria]
+            results_df.to_pickle(path=cfg.results_df)
+            results_df.to_csv(path_or_buf=cfg.results_path, index=False)
+            exit()
         criteria = results_df['title'].values != title
         results_df = results_df[criteria]
     results_df = results_df.append(pd.DataFrame(results, columns=['title', 'dataset', 'model_name', 'preprocessing',  'rmse',  'R2_adjusted']))
     results_df.to_pickle(path=cfg.results_df)
+    results_df.to_csv(path_or_buf=cfg.results_path, index=False)
 
 
 if __name__ == '__main__':
@@ -144,12 +100,10 @@ if __name__ == '__main__':
     print("------------------  Reading Train from path ------------------")
     X = pd.read_pickle(path=cfg.X_train_path)
     Y = pd.read_pickle(path=cfg.Y_train_path)
-    benchmark_linear_regression = Benchmark_lg(log=True)
-    evaluate_model_on_train(title='preprocessed + Scaled linear regression 15.12.19', model_name='linear regression',
+    linear_model = Ridge_Regression()
+    evaluate_model_on_train(title='preprocessed ridge regression 15.12.19', model_name='ridge regression',
                             preprocessing='preprocessed 1.0',
-                            data=[X, Y], results_df=results_df, model=benchmark_linear_regression)
-    # monte_carlo_experiements(title='preprocessed linear regression 14.12.19', model_name='linear regression',
-    #                          preprocessing='preprocessed 1.0',
-    #                          data=[X, Y], results_df=results_df, model=benchmark_linear_regression)
+                            data=[X, Y], results_df=results_df, model=linear_model)
+
 
 

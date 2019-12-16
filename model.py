@@ -1,5 +1,5 @@
 from data_exploration import *
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.metrics import r2_score
 from utils import root_mean_square
 import abc
@@ -33,18 +33,18 @@ class LinearModel(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_model(self, X):
+    def get_model(self):
         pass
 
 
 class Benchmark_lg(LinearModel):
 
-    def __init__(self, log):
+    def __init__(self, log=True,  normalize=False):
         """
         linear regression wrapper class
         :param log: if the dependent variable has already been through log
         """
-        self.model = LinearRegression()
+        self.model = LinearRegression(normalize=normalize)
         self.log = log
 
     def model_fit(self, X, Y, verbose=cfg.verbose):
@@ -64,7 +64,17 @@ class Benchmark_lg(LinearModel):
     def predict(self, X):
         return self.model.predict(X)
 
-    def get_model(self, X):
+    def get_model(self):
         return self.model
+
+
+class Ridge_Regression(Benchmark_lg):
+
+    def __init__(self, alpha=0.1, normalize=False, log=True):
+        self.model = Ridge(alpha=alpha, normalize=normalize)
+        self.log = log
+
+
+
 
 

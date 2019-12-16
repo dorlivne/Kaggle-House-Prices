@@ -15,5 +15,6 @@ class IowaHousePricingConfig:
     regression_coeffs_path = r"model/linear_regression/coeffs"
     MC_episodes = 10  # arbitrary number
     results_df = r"saved_models/results.pkl"
+    results_path = r"saved_models/results_models.csv"
     results_for_submission_path = r"results.csv"
     scale = False
