@@ -4,6 +4,13 @@ from sklearn.preprocessing import StandardScaler
 from utils import  make_randoms
 from sklearn.linear_model import Lasso
 
+
+
+def throw_non_linear_dependent_features(df: pd.DataFrame, verbose=cfg.verbose):
+    # TODO
+    return df
+
+
 def throw_constant_features(df: pd.DataFrame, verbose=cfg.verbose):
     """
     throw away constant(almost constant) variables
@@ -21,7 +28,18 @@ def throw_constant_features(df: pd.DataFrame, verbose=cfg.verbose):
     return df
 
 
-def fill_specific_numerical_missing_data(df, missing_numerical_columns):
+def throw_non_relevent_features(df: pd.DataFrame, verbose=cfg.verbose):
+    """
+    throw away non-relevant variables
+    :param df: Kaggle House sale panda dataframe
+    :return:Kaggle House sale panda dataframe without constant features
+    """
+    df = throw_constant_features(df, verbose)
+    df = throw_non_linear_dependent_features(df, verbose)
+
+
+
+    def fill_specific_numerical_missing_data(df, missing_numerical_columns):
     """
     through visualization we can cluster some columns by other columns and appoint more accurate values
     :param df: panda dataframe
@@ -174,8 +192,6 @@ def fill_missing_data(df: pd.DataFrame, verbose=cfg.verbose):
                 object_null_column_list.append(col)
             else:
                 numerical_null_column_list.append(col)
-    if verbose:
-        print("null values in categorical\ordinal values has been replaced with 'NA'")
     # fill numerical values to missing values in numerical columns
     df = fill_numerical_missing_data(df, numerical_null_column_list)
     # fill categorical values
@@ -328,6 +344,9 @@ def prune_features(X_train, Y_train , verbose=cfg.verbose):
     if cfg.verbose:
         print("removed features and their importance according to LASSO coeff:")
         for feature in useless_features_names:
+            print("feature {} : {}".format(feature, df_features_score['features_score'].loc[feature]))
+        print("usefull features and their importance according to LASSO coeff:")
+        for feature in usefull_features_names:
             print("feature {} : {}".format(feature, df_features_score['features_score'].loc[feature]))
     return usefull_features_names, useless_features_names
 

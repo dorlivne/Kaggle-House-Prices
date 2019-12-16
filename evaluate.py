@@ -1,7 +1,7 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg
+from model import Benchmark_lg, Ridge_Regression
 
 if __name__ == '__main__':
     if not os.path.isfile(cfg.results_df):
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     Y = pd.read_pickle(path=cfg.Y_train_path)
     X_test = pd.read_pickle(path=cfg.X_test_path)
     print("------------------  Loading Model ------------------")
-    model = Benchmark_lg(log=True)
+    model = Ridge_Regression()
     print("------------------  Training Model on Train set ------------------")
     model.model_fit(X, Y)
     print("------------------  SalePrice evaluation on Test set ------------------")
