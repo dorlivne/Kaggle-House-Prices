@@ -1,0 +1,15 @@
+title,dataset,model_name,preprocessing,rmse,R2_adjusted
+linear regression vanilla,train,Benchmark linear regression,normal,0.09753970090209899,0.9452672578570924
+linear regression vanilla,val,Benchmark linear regression,normal,0.5997203124631265,0.621655750527117
+linear regression scales,train,Benchmark linear regression,normal + scale,0.09879581147113924,0.9456306534001152
+linear regression scales,val,Benchmark linear regression,normal + scale,4.061888534354986,-0.00393405006854326
+preprocessed linear regression 14.12.19,train,linear regression,preprocessed 1.0,0.09327209960574584,0.9362072156269543
+preprocessed linear regression 14.12.19,val,linear regression,preprocessed 1.0,0.11656206897010213,0.9055911625900512
+preprocessed + Scaled linear regression 15.12.19,train,linear regression,preprocessed 1.0,0.09341475097916473,0.9360340666539526
+preprocessed + Scaled linear regression 15.12.19,val,linear regression,preprocessed 1.0,114687318.95957927,-3.874438789089655e+17
+preprocessed ridge regression 15.12.19,train,ridge regression,preprocessed 1.0,0.09335146191046315,0.9359829262173572
+preprocessed ridge regression 15.12.19,val,ridge regression,preprocessed 1.0,0.11506744838299934,0.9080348091108867
+preprocessed + normalized ridge regression 15.12.19,train,ridge regression,preprocessed 1.0,0.0983115656572214,0.9257271999946033
+preprocessed + normalized ridge regression 15.12.19,val,ridge regression,preprocessed 1.0,0.11523499790391725,0.9077863018462878
+preprocessed + normalized ridge regression 17.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction,0.10036045276444804,0.9237486716712721
+preprocessed + normalized ridge regression 17.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction,0.11168875079941891,0.9131930889986292
