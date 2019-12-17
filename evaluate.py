@@ -15,7 +15,7 @@ if __name__ == '__main__':
     Y = pd.read_pickle(path=cfg.Y_train_path)
     X_test = pd.read_pickle(path=cfg.X_test_path)
     print("------------------  Loading Model ------------------")
-    model = Ridge_Regression()
+    model = Ridge_Regression(alpha=10.0)
     print("------------------  Training Model on Train set ------------------")
     model.model_fit(X, Y)
     print("------------------  SalePrice evaluation on Test set ------------------")

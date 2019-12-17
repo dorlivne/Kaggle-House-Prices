@@ -39,7 +39,7 @@ def throw_non_relevent_features(df: pd.DataFrame, verbose=cfg.verbose):
 
 
 
-    def fill_specific_numerical_missing_data(df, missing_numerical_columns):
+def fill_specific_numerical_missing_data(df, missing_numerical_columns):
     """
     through visualization we can cluster some columns by other columns and appoint more accurate values
     :param df: panda dataframe
@@ -215,14 +215,13 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df['TotalBathAbvGrd'] = df['FullBath'] + 0.5 * df['HalfBath']
     df['TotalBathBsmt'] = df['BsmtFullBath'] + 0.5 * df['BsmtHalfBath']
     df['TotalRmsAbvGrdIncBath'] = df['TotRmsAbvGrd'] + df['TotalBathAbvGrd']
+    df = df.drop(['FullBath', 'HalfBath', 'BsmtFullBath', 'BsmtHalfBath'], axis='columns')
     # df['TotalRms'] = df['TotalRmsAbvGrdIncBath'] + df['TotalBathBsmt'] # low LASSO coeff
 
     # feature extraction: features related to area
     # df['TotalSF'] = df['TotalBsmtSF'] + df['GrLivArea'] # low LASSO coeff
-    df['TotalPorch'] = df['OpenPorchSF'] + df['EnclosedPorch'] + df['3SsnPorch'] + df[
-        'ScreenPorch']
-    # df['TotalArea'] = df['TotalSF'] + df['TotalPorch'] + df['GarageArea'] + df['WoodDeckSF'] # low LASSO coeff
-
+    df['TotalPorch'] = df['OpenPorchSF'] + df['EnclosedPorch'] + df['ScreenPorch'] + df['3SsnPorch']
+    # df = df.drop(['OpenPorchSF', 'EnclosedPorch', 'ScreenPorch', '3SsnPorch'], axis='columns')
     # feature extraction: assigning number to ordinal features
     ordinal_features = ['ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 'HeatingQC',
                         'KitchenQual', 'FireplaceQu', 'GarageQual', 'GarageCond', 'PoolQC']
@@ -234,6 +233,7 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df['BsmtQualCond'] = df['BsmtQual'] * df['BsmtCond']
     df['GarageQualCond'] = df['GarageQual'] * df['GarageCond']
     df['OverallQualCond'] = df['OverallQual'] * df['OverallCond']
+    # df = df.drop(['ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 'GarageQual', 'GarageCond', 'OverallQual', 'OverallCond'], axis='columns')
     # feature extraction: assigning number to ordinal features
     ordinal_features = ['BsmtExposure']
     df[ordinal_features] = df[ordinal_features].replace('Gd', 4).replace('Av', 3).replace('Mn', 2).replace('No', 1)\
@@ -254,6 +254,9 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df['YearBuiltSold'] = df['YrSold'] - df['YearBuilt']
     df['YearRemodSold'] = df['YrSold'] - df['YearRemodAdd']
     df['YearGarageSold'] = df['YrSold'] - df['GarageYrBlt']
+    # creating pool features
+    df['PoolQcArea'] = df['PoolQC'] * df['PoolArea']
+    df = df.drop(['PoolQC', 'PoolArea'], axis='columns')
     return df
 
 
@@ -267,6 +270,12 @@ def fixing_skewness(df:pd.DataFrame, visualize=False):
     numerical_columns = df.select_dtypes(include=['number']).columns.drop(['SalePrice']).tolist()
     # already transformed SalePrice to be normalized
     for col in numerical_columns:
+        values_set = df[col].values
+        values_set = set(values_set)
+        length_of_set = len(values_set)
+        if length_of_set < 20:
+            print("{} is sparse, we didnt skew it".format(col))
+            continue
         data = df[col]
         skewness = data.skew()
         if skewness > 0.75:
@@ -339,6 +348,7 @@ def prune_features(X_train, Y_train , verbose=cfg.verbose):
     usefull_features = df_features_score[usefull_features_criteria]
     useless_features = df_features_score[[not i for i in usefull_features_criteria]]
     useless_features = useless_features.sort_values('features_score')
+    usefull_features = usefull_features.sort_values('features_score')
     usefull_features_names = usefull_features.index
     useless_features_names = useless_features.index
     if cfg.verbose:
