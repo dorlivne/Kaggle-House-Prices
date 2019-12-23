@@ -1,9 +1,11 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg, LinearModel, Ridge_Regression
+from model import Benchmark_lg, LinearModel, Ridge_Regression, Lasso_Regression, Kernal_Regression
 from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import cross_val_score, GridSearchCV
+from evaluate import evaluate
+
 
 def split_data(X, Y, train_portion=0.75):
     msk = np.random.rand(len(X)) < train_portion
@@ -88,6 +90,24 @@ def evaluate_model_on_train(title, model_name, preprocessing, data,
     results_df.to_csv(path_or_buf=cfg.results_path, index=False)
 
 
+def grid_search(params_grid, X, Y, linear_model:LinearModel):
+    linear_model_cv = GridSearchCV(linear_model.get_model(), params_grid, iid=False, cv=5)
+    linear_model_cv.fit(X, Y)
+    print("Best parameters set found on development set:")
+    print()
+    print(linear_model_cv.best_params_)
+    print()
+    print("Grid scores on development set:")
+    print()
+    means = linear_model_cv.cv_results_['mean_test_score']
+    stds = linear_model_cv.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, linear_model_cv.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+    print()
+    return linear_model_cv.best_params_
+
+
 if __name__ == '__main__':
     if not os.path.isfile(cfg.results_df):
         results_df = pd.DataFrame()
@@ -95,31 +115,19 @@ if __name__ == '__main__':
         results_df.to_pickle(path=cfg.results_df)
     else:
         results_df = pd.read_pickle(path=cfg.results_df)
-
+    X_test = pd.read_pickle(path=cfg.X_test_path)
     print("------------------  Reading Train from path ------------------")
     X = pd.read_pickle(path=cfg.X_train_path)
     Y = pd.read_pickle(path=cfg.Y_train_path)
-    linear_model = Ridge_Regression(alpha=10.0)
-    # alpha_range = np.logspace(-4, 4, base=10, num=9)
-    # params_grid = {'alpha': alpha_range}
-    # linear_model_cv = GridSearchCV(linear_model.get_model(), params_grid, iid=False, cv=5)
-    # linear_model_cv.fit(X, Y)
-    # print("Best parameters set found on development set:")
-    # print()
-    # print(linear_model_cv.best_params_)
-    # print()
-    # print("Grid scores on development set:")
-    # print()
-    # means = linear_model_cv.cv_results_['mean_test_score']
-    # stds = linear_model_cv.cv_results_['std_test_score']
-    # for mean, std, params in zip(means, stds, linear_model_cv.cv_results_['params']):
-    #     print("%0.3f (+/-%0.03f) for %r"
-    #           % (mean, std * 2, params))
-    # print()
-
-    evaluate_model_on_train(title='preprocessed + normalized ridge regression 17.12.19', model_name='ridge regression',
+    alpha_range = np.logspace(-4, 4, base=10, num=9)
+    params_grid = {'alpha': alpha_range}
+    linear_model = Kernal_Regression()
+    best_param = grid_search(params_grid, X, Y, linear_model)
+    linear_model = Kernal_Regression(alpha=best_param['alpha'])
+    evaluate_model_on_train(title='preprocessed Kernal regression 23.12.19', model_name='Kernal regression',
                             preprocessing='preprocessed 1.0 + dropping features during extraction',
                             data=[X, Y], results_df=results_df, model=linear_model)
+    evaluate(linear_model, X_test, X, Y)
 
 
 

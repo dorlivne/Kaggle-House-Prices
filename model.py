@@ -1,8 +1,10 @@
 from data_exploration import *
-from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.linear_model import LinearRegression, Ridge, ElasticNet, Lasso, BayesianRidge
 from sklearn.metrics import r2_score
 from utils import root_mean_square
 import abc
+from sklearn.kernel_ridge import KernelRidge
+
 
 # Note: Ridge Regression penalized the slope, theortically, we insert bias to the estimator in order to get an estimator
 #       with smaller variance.
@@ -74,7 +76,44 @@ class Ridge_Regression(Benchmark_lg):
         self.model = Ridge(alpha=alpha, normalize=normalize)
         self.log = log
 
+class Elastic_Regression(Benchmark_lg):
+    def __init__(self, alpha, l1_ratio):
+        self.model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+        self.log = True
 
 
+class Lasso_Regression(Benchmark_lg):
+    def __init__(self, alpha=0.1, normalize=False, log=True):
+        self.model = Lasso(alpha=alpha, normalize=normalize)
+        self.log = log
+
+class Kernal_Regression(Benchmark_lg): # TODO delete useless coefficient (like double HasPool??)
+    def __init__(self, alpha=0.1):
+        self.model = KernelRidge(alpha=alpha, kernel='polynomial', degree=2)
+        self.log = True
+
+
+class Bayesian_Regression(Benchmark_lg):
+    def __init__(self, alpha=0.1, lamnda=0.1):
+        self.model = BayesianRidge()
+
+
+class Ensemble_reg:
+    def __init__(self, alpha):
+        self.lg_model = Benchmark_lg()
+        self.ridge_model = Ridge_Regression(alpha)
+        self.elastic_model = Elastic_Regression(alpha=0.001, l1_ratio=0.5)
+
+    def model_fit(self, X, Y):
+        self.lg_model.model_fit(X, Y)
+        self.ridge_model.model_fit(X, Y)
+        self.elastic_model.model_fit(X, Y)
+        return self
+
+    def predict(self, X):
+        lg_prediction_results = self.lg_model.predict(X=X)
+        ridge_prediction_results = self.ridge_model.predict(X=X)
+        elastic_prediction_results = self.elastic_model.predict(X=X)
+        return 0.4 * ridge_prediction_results + 0.4 * elastic_prediction_results + 0.2 * lg_prediction_results  # weighted sum
 
 
