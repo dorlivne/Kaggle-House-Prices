@@ -11,5 +11,19 @@ preprocessed ridge regression 15.12.19,train,ridge regression,preprocessed 1.0,0
 preprocessed ridge regression 15.12.19,val,ridge regression,preprocessed 1.0,0.11506744838299934,0.9080348091108867
 preprocessed + normalized ridge regression 15.12.19,train,ridge regression,preprocessed 1.0,0.0983115656572214,0.9257271999946033
 preprocessed + normalized ridge regression 15.12.19,val,ridge regression,preprocessed 1.0,0.11523499790391725,0.9077863018462878
-preprocessed + normalized ridge regression 17.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction,0.10036045276444804,0.9237486716712721
-preprocessed + normalized ridge regression 17.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction,0.11168875079941891,0.9131930889986292
+preprocessed + normalized ridge regression 17.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction,0.09830566069219732,0.9275440087884917
+preprocessed + normalized ridge regression 17.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction,0.1114226448086509,0.9136122386294687
+preprocessed + normalized + feature engineering ridge regression 18.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction + creating SqrPrice feature,0.0983535427170282,0.9276186724010408
+preprocessed + normalized + feature engineering ridge regression 18.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction + creating SqrPrice feature,0.11017234196071021,0.9155373389606865
+preprocessed Elastic regression 19.12.19,train,elastic regression,preprocessed 1.0 + dropping features during extraction,0.10425806080256426,0.9175808243184115
+preprocessed Elastic regression 19.12.19,val,elastic regression,preprocessed 1.0 + dropping features during extraction,0.11149997827977534,0.9133070164814345
+preprocessed + normalized elastic regression 19.12.19,train,elastic regression,preprocessed 1.0 + dropping features during extraction,0.0976199232791889,0.928860928000805
+preprocessed + normalized elastic regression 19.12.19,val,elastic regression,preprocessed 1.0 + dropping features during extraction,0.11113462228943338,0.9140350535975532
+preprocessed  ridge regression 22.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction,0.09768138216019197,0.9284569880447568
+preprocessed  ridge regression 22.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction,0.11073115505287238,0.9146964905496897
+preprocessed  lasso regression 23.12.19,train,lasso regression,preprocessed 1.0 + dropping features during extraction,0.10063053591405248,0.9239518176875369
+preprocessed  lasso regression 23.12.19,val,lasso regression,preprocessed 1.0 + dropping features during extraction,0.1106082588436909,0.9147791470196245
+preprocessed  ridge regression 23.12.19,train,ridge regression,preprocessed 1.0 + dropping features during extraction,0.09332437794951619,0.9357479280973303
+preprocessed  ridge regression 23.12.19,val,ridge regression,preprocessed 1.0 + dropping features during extraction,0.11103741507078242,0.9142307897648998
+preprocessed Kernal regression 23.12.19,train,Kernal regression,preprocessed 1.0 + dropping features during extraction,0.0937660934393143,0.9345756989037936
+preprocessed Kernal regression 23.12.19,val,Kernal regression,preprocessed 1.0 + dropping features during extraction,0.11192361944334017,0.9129587997187155
