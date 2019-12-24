@@ -1,7 +1,25 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg, Ridge_Regression, Ensemble_reg, Elastic_Regression
+from model import Benchmark_lg, Ridge_Regression, LinearModel, Ensemble_reg, Elastic_Regression, Kernal_Regression
+from sklearn.model_selection import cross_val_score, GridSearchCV
+
+def grid_search(params_grid, X, Y, linear_model:LinearModel):
+    linear_model_cv = GridSearchCV(linear_model.get_model(), params_grid, iid=False, cv=5)
+    linear_model_cv.fit(X, Y)
+    print("Best parameters set found on development set:")
+    print()
+    print(linear_model_cv.best_params_)
+    print()
+    print("Grid scores on development set:")
+    print()
+    means = linear_model_cv.cv_results_['mean_test_score']
+    stds = linear_model_cv.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, linear_model_cv.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+    print()
+    return linear_model_cv.best_params_
 
 
 def evaluate(model, X_test, X, Y):

@@ -125,7 +125,7 @@ def visualizations(data_frame):
     draw_bars(df=data_frame, variables=categorical_columns, n_rows=len(categorical_columns[:-1]) // 4 + 1, n_cols=4)
     plt.figure()
     corr = data_frame.corr()
-    corr['SalePrice'].sort_values(ascending=False)
+    tmp = corr['SalePrice'].sort_values(ascending=False)
     sns.heatmap(corr,
                 xticklabels=corr.columns,
                 yticklabels=corr.columns,

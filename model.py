@@ -2,6 +2,8 @@ from data_exploration import *
 from sklearn.linear_model import LinearRegression, Ridge, ElasticNet, Lasso, BayesianRidge
 from sklearn.metrics import r2_score
 from utils import root_mean_square
+import seaborn as sns
+sns.set(style="whitegrid")
 import abc
 from sklearn.kernel_ridge import KernelRidge
 
@@ -77,7 +79,7 @@ class Ridge_Regression(Benchmark_lg):
         self.log = log
 
 class Elastic_Regression(Benchmark_lg):
-    def __init__(self, alpha, l1_ratio):
+    def __init__(self, alpha=1.0, l1_ratio=0.5):
         self.model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
         self.log = True
 
@@ -87,33 +89,27 @@ class Lasso_Regression(Benchmark_lg):
         self.model = Lasso(alpha=alpha, normalize=normalize)
         self.log = log
 
-class Kernal_Regression(Benchmark_lg): # TODO delete useless coefficient (like double HasPool??)
+class Kernal_Regression(Benchmark_lg):
     def __init__(self, alpha=0.1):
         self.model = KernelRidge(alpha=alpha, kernel='polynomial', degree=2)
         self.log = True
 
-
-class Bayesian_Regression(Benchmark_lg):
-    def __init__(self, alpha=0.1, lamnda=0.1):
-        self.model = BayesianRidge()
-
-
 class Ensemble_reg:
-    def __init__(self, alpha):
-        self.lg_model = Benchmark_lg()
-        self.ridge_model = Ridge_Regression(alpha)
-        self.elastic_model = Elastic_Regression(alpha=0.001, l1_ratio=0.5)
+    def __init__(self):
+        self.ridge_model = Ridge_Regression(alpha=1.0)
+        self.lasso_model = Lasso_Regression(alpha=0.0001)
+        self.kernal_model = Kernal_Regression(alpha=2371)
 
     def model_fit(self, X, Y):
-        self.lg_model.model_fit(X, Y)
+        self.lasso_model.model_fit(X, Y)
         self.ridge_model.model_fit(X, Y)
-        self.elastic_model.model_fit(X, Y)
+        self.kernal_model.model_fit(X, Y)
         return self
 
     def predict(self, X):
-        lg_prediction_results = self.lg_model.predict(X=X)
+        lasso_prediction_results = self.lasso_model.predict(X=X)
         ridge_prediction_results = self.ridge_model.predict(X=X)
-        elastic_prediction_results = self.elastic_model.predict(X=X)
-        return 0.4 * ridge_prediction_results + 0.4 * elastic_prediction_results + 0.2 * lg_prediction_results  # weighted sum
+        kernal_prediction_results = self.kernal_model.predict(X=X)
+        return 0.8 * kernal_prediction_results + 0.15 * lasso_prediction_results + 0.05 * ridge_prediction_results  # weighted sum
 
 

@@ -17,4 +17,4 @@ class IowaHousePricingConfig:
     results_df = r"saved_models/results.pkl"
     results_path = r"saved_models/results_models.csv"
     results_for_submission_path = r"results.csv"
-    scale = False
+    scale = True

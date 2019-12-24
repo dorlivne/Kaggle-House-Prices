@@ -1,16 +1,11 @@
 from data_exploration import *
 from config import IowaHousePricingConfig as cfg
 from sklearn.preprocessing import StandardScaler
-from utils import  make_randoms
+from sklearn.decomposition import PCA
 from sklearn.linear_model import Lasso
 import seaborn
+from sklearn.preprocessing import RobustScaler
 seaborn.set(style='ticks')
-
-
-def throw_non_linear_dependent_features(df: pd.DataFrame, verbose=cfg.verbose):
-    # TODO
-    return df
-
 
 def throw_constant_features(df: pd.DataFrame, verbose=cfg.verbose):
     """
@@ -27,18 +22,6 @@ def throw_constant_features(df: pd.DataFrame, verbose=cfg.verbose):
     if verbose:
         print("after dropping constant features, num of features is {}".format(df.shape[-1]))
     return df
-
-
-def throw_non_relevent_features(df: pd.DataFrame, verbose=cfg.verbose):
-    """
-    throw away non-relevant variables
-    :param df: Kaggle House sale panda dataframe
-    :return:Kaggle House sale panda dataframe without constant features
-    """
-    df = throw_constant_features(df, verbose)
-    df = throw_non_linear_dependent_features(df, verbose)
-
-
 
 def fill_specific_numerical_missing_data(df, missing_numerical_columns):
     """
@@ -227,13 +210,14 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df['TotalBathAbvGrd'] = df['FullBath'] + 0.5 * df['HalfBath']
     df['TotalBathBsmt'] = df['BsmtFullBath'] + 0.5 * df['BsmtHalfBath']
     df['TotalRmsAbvGrdIncBath'] = df['TotRmsAbvGrd'] + df['TotalBathAbvGrd']
-    df = df.drop(['FullBath', 'HalfBath', 'BsmtFullBath', 'BsmtHalfBath'], axis='columns')
+    df = df.drop(['FullBath', 'HalfBath', 'BsmtFullBath', 'BsmtHalfBath', 'TotalBathAbvGrd', 'TotRmsAbvGrd' ], axis='columns')
     # df['TotalRms'] = df['TotalRmsAbvGrdIncBath'] + df['TotalBathBsmt'] # low LASSO coeff
+
 
     # feature extraction: features related to area
     # df['TotalSF'] = df['TotalBsmtSF'] + df['GrLivArea'] # low LASSO coeff
     df['TotalPorch'] = df['OpenPorchSF'] + df['EnclosedPorch'] + df['ScreenPorch'] + df['3SsnPorch']
-    # df = df.drop(['OpenPorchSF', 'EnclosedPorch', 'ScreenPorch', '3SsnPorch'], axis='columns')
+    df = df.drop(['OpenPorchSF', 'EnclosedPorch', 'ScreenPorch', '3SsnPorch'], axis='columns')
     # feature extraction: assigning number to ordinal features
     ordinal_features = ['ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 'HeatingQC',
                         'KitchenQual', 'FireplaceQu', 'GarageQual', 'GarageCond', 'PoolQC']
@@ -251,7 +235,7 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df[ordinal_features] = df[ordinal_features].replace('Gd', 4).replace('Av', 3).replace('Mn', 2).replace('No', 1)\
         .replace('NA', 0)
     # feature extraction: assigning number to ordinal features
-    ordinal_features = ['BsmtFinType1']
+    ordinal_features = ['BsmtFinType1', 'BsmtFinType1']
     df[ordinal_features] = df[ordinal_features].replace('GLQ', 6).replace('ALQ', 5).replace('BLQ', 4).replace('Rec', 3)\
         .replace('LwQ', 2).replace('Unf', 1).replace('NA', 0)
     # feature extraction: assigning number to ordinal features
@@ -259,8 +243,8 @@ def feature_extraction(df:pd.DataFrame, verbose=cfg.verbose):
     df[ordinal_features] = df[ordinal_features].replace('Fin', 3).replace('RFn', 2).replace('Unf', 1).replace('NA', 0)
     # feature extraction: assigning number to ordinal features
     ordinal_features = ['Fence']
-    df[ordinal_features] = df[ordinal_features].replace('GdPrv', 4).replace('MnPrv', 3).replace('GdWo', 2)\
-        .replace('MnWw', 1).replace('NA', 0)
+    df[ordinal_features] = df[ordinal_features].replace('GdPrv', 1).replace('MnPrv', 0).replace('GdWo', 0)\
+        .replace('MnWw', 0).replace('NA', 0)  # according to bar plot the main diff for sale price is between good privacy and the rest
     # creating time features
     df['YearBuiltRemod'] = df['YearRemodAdd'] - df['YearBuilt']
     df['YearBuiltSold'] = df['YrSold'] - df['YearBuilt']
@@ -352,6 +336,25 @@ def drop_columns_by_correlation(corr_list:pd.DataFrame, df:pd.DataFrame):
     return df
 
 
+def pca(X: pd.DataFrame, Y: pd.DataFrame, X_test: pd.DataFrame, verbose=cfg.verbose, n_component=150):
+    if cfg.scale:
+        print("------------------  Scaling Train ------------------")
+        scaler = RobustScaler()
+        X = scaler.fit_transform(X, Y)
+        X_test = scaler.transform(X_test)
+    pca_model = PCA(n_component)
+    df = np.concatenate((X, X_test), axis=0)
+    df = pca_model.fit_transform(df)
+    if verbose:
+        print("PCA amount of variance explained by components:")
+        print(np.exp(pca_model.explained_variance_))
+        print("PCA amount of variance ratio explained by components:")
+        print(np.exp(pca_model.explained_variance_ratio_))
+    X_new = df[0: -X_test.shape[0]]
+    X_test_new = df[-X_test.shape[0]:]
+    return X_new, X_test_new
+
+
 def preprocessing():
     print("------------------ Extracting data from CSV files ------------------")
     df_train = extract_data(path=cfg.train_csv_path)
@@ -383,7 +386,10 @@ def preprocessing():
     df_total = feature_extraction(df_total)
     print("------------------  Transforming categorical values to indicator features ------------------")
     # transforming categorical values to indicator features
+    # create of list of dummy variables that I will drop, which will be the last
+    # column generated from each categorical feature
     df_total = pd.get_dummies(df_total, columns=None, drop_first=True)
+    # drop-first creates the k-1 categorical features from k categorical values
     print("------------------ Dropping sparse features ------------------")
     df_total = get_rid_of_sparse_columns(df_total)
     print("------------------  Seperating back to test and train data frames ------------------")
@@ -398,6 +404,8 @@ def preprocessing():
     usefull_features, _ = prune_features(X_train, Y_train)
     X_train = X_train[usefull_features]
     df_test = df_test[usefull_features]
+    print("------------------ PCA ------------------")
+    X_train, df_test = pca(X=X_train, Y=Y_train, X_test=df_test, n_component=153)
     print("------------------  Saving Train and Test data frames ------------------")
     pd.to_pickle(X_train, cfg.X_train_path)
     pd.to_pickle(Y_train, cfg.Y_train_path)

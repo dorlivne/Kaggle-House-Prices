@@ -1,13 +1,13 @@
 from data_exploration import *
 import os
 from utils import *
-from model import Benchmark_lg, LinearModel, Ridge_Regression, Lasso_Regression, Kernal_Regression
+from model import Benchmark_lg, LinearModel, Ridge_Regression, Lasso_Regression, Kernal_Regression, Elastic_Regression
 from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from evaluate import evaluate
 
 
-def split_data(X, Y, train_portion=0.75):
+def split_data(X, Y, train_portion=0.5):
     msk = np.random.rand(len(X)) < train_portion
     X_train = X[msk]
     Y_train = Y[msk]
@@ -39,7 +39,7 @@ preprocessed 1.0 means:
 
 
 def evaluate_model_on_train(title, model_name, preprocessing, data,
-                            results_df:pd.DataFrame, model: LinearModel, verbose=cfg.verbose):
+                            results_df:pd.DataFrame, model: LinearModel, verbose=cfg.verbose, visualize=True):
     """
     Cross-validation, split train data frame to equally sized val and train data sets and evaluate R2 adjusted and RMSE
     :param title: name of experiment to be saved in results data frame
@@ -54,13 +54,19 @@ def evaluate_model_on_train(title, model_name, preprocessing, data,
     """
     print("------------------  Training on train and CV on Train ------------------")
     X, Y = data
-    if cfg.scale:
-        print("------------------  Scaling Train ------------------")
-        scaler = RobustScaler()
-        X = scaler.fit_transform(X)
+    if visualize:
+        X_train, X_val, Y_train, Y_val = split_data(X, Y)
+        model.model_fit(X_train, Y_train)
+        y_val_pred = model.predict(X_val)
+        plt.figure()
+        sns.residplot(y_val_pred, Y_val, lowess=True, color="b")
+        plt.xlabel("Fitted values")
+        plt.ylabel("Residuals")
+        plt.title(model_name)
+        plt.savefig(cfg.visualization_dir +"/Residuals_{}".format(model_name))
 
-    model.model_fit(X, Y)
     print("------------------  Evaluating on Train ------------------")
+    model.model_fit(X, Y)
     train_rmse, train_R2_adjusted = model.model_eval(X, Y, False)
     rmse_cv_score = np.sqrt(np.abs(cross_val_score(model.get_model(), X, Y, cv=5, scoring='neg_mean_squared_error')))
     R2_cv_score = cross_val_score(model.get_model(), X, Y, cv=5, scoring='r2')
@@ -119,14 +125,20 @@ if __name__ == '__main__':
     print("------------------  Reading Train from path ------------------")
     X = pd.read_pickle(path=cfg.X_train_path)
     Y = pd.read_pickle(path=cfg.Y_train_path)
-    alpha_range = np.logspace(-4, 4, base=10, num=9)
+    # if cfg.scale:
+    #     print("------------------  Scaling Train ------------------")
+    #     scaler = RobustScaler()
+    #     X = scaler.fit_transform(X, Y)
+    #     X_test = scaler.transform(X_test)
+    alpha_range = np.arange(start=0.1, stop=0.5, step=0.05) #np.logspace(-3, 3, base=10, num=9)
     params_grid = {'alpha': alpha_range}
     linear_model = Kernal_Regression()
     best_param = grid_search(params_grid, X, Y, linear_model)
     linear_model = Kernal_Regression(alpha=best_param['alpha'])
-    evaluate_model_on_train(title='preprocessed Kernal regression 23.12.19', model_name='Kernal regression',
+
+    evaluate_model_on_train(title='preprocessed Scaled PCA Kernal regression 24.12.19', model_name='Kernal regression',
                             preprocessing='preprocessed 1.0 + dropping features during extraction',
-                            data=[X, Y], results_df=results_df, model=linear_model)
+                            data=[X, Y], results_df=results_df, model=linear_model, visualize=False)
     evaluate(linear_model, X_test, X, Y)
 
 

@@ -11,6 +11,8 @@ def extract_data(path=r"data/train.csv"):
     # that means that treating mssubclass as a numerical variable is not logical because the numbers doesn't mean anything
     #  convert 'MSSubclass' column to type(str) , to be object type variable
     data_frame_train['MSSubClass'] = data_frame_train['MSSubClass'].astype(str)
+    #  convert 'MoSold' to type(str) , to be object type variable
+    # data_frame_train['MoSold'] = data_frame_train['MoSold'].astype(str)
     # set id to be the index of an observation and not part of the feature space
     data_frame_train.set_index('Id', inplace=True)
     return data_frame_train
@@ -49,3 +51,25 @@ def over_write_or_exit_from_usr():
         return over_write_or_exit_from_usr()
     else:
         return user_input
+
+
+def find_sqrprice_by_centroid(sample_lotarea, centroids):
+    """
+    finding the mean SqrPrice for sample
+    :param sample_lotarea: sample lot area value
+    :param centroids: sorted by lot area centroids
+    :return: SqrPrice of closest centroid
+    """
+    distance = np.inf
+    ans_sqrprice = 0
+    for [centroid_lotarea, centroid_sqrprice] in centroids:
+        if np.abs(centroid_lotarea - sample_lotarea) < distance:
+            distance = np.abs(centroid_lotarea - sample_lotarea)
+            ans_sqrprice = centroid_sqrprice
+        else:
+            # because centroids are sorted, once the distance doesnt get shorter
+            #  it will not happen with the rest of the centroids
+            return ans_sqrprice
+    return ans_sqrprice
+
+
