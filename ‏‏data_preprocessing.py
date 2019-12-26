@@ -371,9 +371,20 @@ def preprocessing():
     # adding the SalePrice dependent variable so we can concatenate test and train for preprocessing purposes
     df_test.insert(df_test.shape[1] - 1, 'SalePrice', np.nan)  # need to be predicted
     df_train['DataType'], df_test['DataType'] = 'train', 'test'  # to divide them later on
+    print("------------------ Creating SqrPrice feature ------------------")
+    df_train['SqrPrice'] = df_train['SalePrice'] /df_train['LotArea']
+    df_train['SqrPrice'] = df_train.groupby('Neighborhood')['SqrPrice'].transform(lambda x: x.median())
+    dict_for_test = {}
+    total_values_in_neighborhood = len(set(df_train['Neighborhood'].values))
+    for sqrPrice, neighborhood in zip(df_train['SqrPrice'].values, df_train['Neighborhood'].values):
+        if neighborhood in dict_for_test: continue
+        dict_for_test[neighborhood] = sqrPrice
+        if len(dict_for_test) == total_values_in_neighborhood:
+            break
+    df_test['SqrPrice'] = 0
+    df_test['SqrPrice'] = df_test['Neighborhood'].transform(lambda x: dict_for_test[x])
     # treat all the data as one, so we would preform the same changes on test and on train
     df_total = pd.concat([df_train, df_test], ignore_index=True, axis=0, sort=False)
-
     print("------------------ Scaling the dependent variable with log1p transform ------------------")
     df_total['SalePrice'] = np.log1p(df_total['SalePrice'])  # natural logarithm to fix the scale of SalePrices
     print("------------------ Throwing out constant features ------------------")
